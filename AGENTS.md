@@ -1,0 +1,8 @@
+# RDiskInfo Workspace Guardrails
+
+- **Disk identity**: Always identify disks by `(device_node, device_type)` — never by `device_node` alone (RAID targets share `/dev/bus/N`). Never invoke `smartctl` on bare `/dev/bus/*` without `-d <dev_type>`.
+- **Linux `egui` glyph safety**: Keep `monochrome_emoji_fonts` enabled on `egui` in `Cargo.toml` (Linux `NotoColorEmoji.ttf` is bitmap-only and renders blank in `epaint`). Any new UI symbol must be asserted in `test_egui_glyph_coverage_and_compact_window_render`.
+- **8-language parity**: Every user-facing string (UI, tooltips, dialogs, menus, toasts, TXT export) must be added to `Strings` in `src/i18n.rs` across all 8 catalogs (`EN`, `PT_BR`, `ES`, `FR`, `DE`, `IT`, `JA`, `ZH_CN`) and registered in `Strings::all_field_values()`.
+- **Non-blocking privilege UX**: Never block UI startup on `pkexec` (populate via `scan_unprivileged_fast()` first), never re-prompt on `F5`/auto-refresh after user cancellation (`elevation_declined`), never block indefinitely in `HelperClient::drop`, and format errors with `ElevationState::summary()` (never `{:?}`).
+- **NVMe & thermal invariants**: Store NVMe Composite Temperature (`02`) and `temperature_sensor_*` raw values in **Kelvin** (`celsius + 273`), preserve hardware `drive_warning_threshold` / `drive_critical_threshold` separately from `HealthEvalOptions`, and enforce `warning < critical`.
+- **Verification gate**: Before finishing edits, run `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`, and (if `dist/rdiskinfo.desktop` changed) `desktop-file-validate dist/rdiskinfo.desktop`.
