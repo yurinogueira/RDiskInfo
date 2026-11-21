@@ -1327,6 +1327,79 @@ fn disk_filename_stem(disks: &[DiskInfo], disk: &DiskInfo) -> String {
     }
 }
 
+pub fn build_app_icon() -> egui::IconData {
+    let bytes = include_bytes!("../img/logo-512.png");
+    let image = image::load_from_memory(bytes)
+        .expect("Embedded src/img/logo-512.png must be a valid PNG")
+        .into_rgba8();
+    let (width, height) = image.dimensions();
+    egui::IconData {
+        rgba: image.into_raw(),
+        width,
+        height,
+    }
+}
+
+pub fn sync_user_desktop_integration() {
+    if crate::privilege::is_root() {
+        return;
+    }
+    let Some(data_home) = std::env::var_os("XDG_DATA_HOME")
+        .filter(|v| !v.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("HOME")
+                .filter(|v| !v.is_empty())
+                .map(|h| PathBuf::from(h).join(".local/share"))
+        })
+    else {
+        return;
+    };
+
+    let logo_bytes = include_bytes!("../img/logo-512.png");
+    let icon_512_dir = data_home.join("icons/hicolor/512x512/apps");
+    if std::fs::create_dir_all(&icon_512_dir).is_ok() {
+        let icon_path = icon_512_dir.join("rdiskinfo.png");
+        let needs_write = std::fs::metadata(&icon_path)
+            .map(|m| m.len() != logo_bytes.len() as u64)
+            .unwrap_or(true);
+        if needs_write {
+            let _ = std::fs::write(&icon_path, logo_bytes);
+        }
+    }
+
+    let pixmaps_dir = data_home.join("pixmaps");
+    if std::fs::create_dir_all(&pixmaps_dir).is_ok() {
+        let pixmap_path = pixmaps_dir.join("rdiskinfo.png");
+        let needs_write = std::fs::metadata(&pixmap_path)
+            .map(|m| m.len() != logo_bytes.len() as u64)
+            .unwrap_or(true);
+        if needs_write {
+            let _ = std::fs::write(&pixmap_path, logo_bytes);
+        }
+    }
+
+    // Ensure a desktop entry exists for Wayland compositors (app_id="rdiskinfo") & application launcher
+    if !Path::new("/usr/share/applications/rdiskinfo.desktop").exists() {
+        let apps_dir = data_home.join("applications");
+        if std::fs::create_dir_all(&apps_dir).is_ok() {
+            let desktop_path = apps_dir.join("rdiskinfo.desktop");
+            let exe_cmd = std::env::current_exe()
+                .ok()
+                .and_then(|p| p.canonicalize().ok().or(Some(p)))
+                .map(|p| p.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "rdiskinfo".to_string());
+            let desktop_template = include_str!("../../dist/rdiskinfo.desktop");
+            let desktop_content =
+                desktop_template.replace("Exec=rdiskinfo", &format!("Exec={}", exe_cmd));
+            let current = std::fs::read_to_string(&desktop_path).unwrap_or_default();
+            if current != desktop_content {
+                let _ = std::fs::write(&desktop_path, desktop_content);
+            }
+        }
+    }
+}
+
 fn load_texture_from_path(ctx: &egui::Context, path: &Path) -> Option<egui::TextureHandle> {
     let img = image::open(path).ok()?.to_rgba8();
     let size = [img.width() as usize, img.height() as usize];

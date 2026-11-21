@@ -53,6 +53,7 @@ jobs:
           mkdir -p "${STAGE}"
           cp target/release/rdiskinfo "${STAGE}/"
           cp dist/rdiskinfo.desktop "${STAGE}/"
+          cp src/img/logo-512.png "${STAGE}/rdiskinfo.png"
           cp assets/icon.svg "${STAGE}/rdiskinfo.svg"
           cp README.md LICENSE "${STAGE}/"
           tar -czf "${STAGE}.tar.gz" "${STAGE}"

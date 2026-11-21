@@ -1787,4 +1787,10 @@ fn test_ata_security_bitmask_unknown_temp_thresholds_and_selftest_error_distinct
     };
     assert_eq!(denied.summary(), "Authentication cancelled");
     assert!(!denied.to_string().contains("Denied {"));
+
+    // 5. Embedded 512x512 logo icon decodes cleanly for window & taskbar integration
+    let icon = rdiskinfo::ui::build_app_icon();
+    assert_eq!(icon.width, 512);
+    assert_eq!(icon.height, 512);
+    assert_eq!(icon.rgba.len(), 512 * 512 * 4);
 }

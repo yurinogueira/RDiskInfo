@@ -3,7 +3,7 @@ use rdiskinfo::export::format_full_report;
 use rdiskinfo::i18n::{LanguageChoice, Strings};
 use rdiskinfo::privilege::{BackendManager, is_root, run_privileged_helper};
 use rdiskinfo::raw_ioctl::read_raw_smart_binary;
-use rdiskinfo::ui::RDiskInfoApp;
+use rdiskinfo::ui::{RDiskInfoApp, build_app_icon, sync_user_desktop_integration};
 use std::io::Write;
 use std::process;
 use std::sync::Arc;
@@ -95,6 +95,8 @@ fn main() {
         return;
     }
 
+    sync_user_desktop_integration();
+
     let initial_width = if theme_override.unwrap_or(cfg.theme).has_stylized_artwork() {
         1080.0
     } else {
@@ -144,57 +146,4 @@ fn print_help() {
            -h, --help            Show this help message",
         env!("CARGO_PKG_VERSION")
     );
-}
-
-fn build_app_icon() -> egui::IconData {
-    let size = 64usize;
-    let mut rgba = vec![0u8; size * size * 4];
-    let cx = 32.0f32;
-    let cy = 27.0f32;
-
-    for y in 0..size {
-        for x in 0..size {
-            let fx = x as f32 + 0.5;
-            let fy = y as f32 + 0.5;
-            let idx = (y * size + x) * 4;
-
-            // Rounded drive chassis
-            if (8.0..=56.0).contains(&fx) && (4.0..=60.0).contains(&fy) {
-                let dx = fx - cx;
-                let dy = fy - cy;
-                let r = (dx * dx + dy * dy).sqrt();
-
-                let color = if fy >= 51.0 && (13.0..=51.0).contains(&fx) {
-                    if (53.0..=55.2).contains(&fy)
-                        && ((17.0..=35.0).contains(&fx) || (38.0..=47.0).contains(&fx))
-                    {
-                        [246, 180, 77, 255]
-                    } else {
-                        [35, 40, 45, 255]
-                    }
-                } else if r <= 4.2 {
-                    [238, 242, 246, 255]
-                } else if r <= 13.8 {
-                    if dx > 0.0 && dy < 0.0 && r <= 9.2 {
-                        [228, 92, 34, 255]
-                    } else {
-                        [46, 148, 236, 255]
-                    }
-                } else if r <= 17.0 {
-                    [245, 248, 250, 255]
-                } else {
-                    let t = (fy - 4.0) / 56.0;
-                    let base = (224.0 - t * 68.0) as u8;
-                    [base.saturating_sub(6), base, base.saturating_add(6), 255]
-                };
-                rgba[idx..idx + 4].copy_from_slice(&color);
-            }
-        }
-    }
-
-    egui::IconData {
-        rgba,
-        width: size as u32,
-        height: size as u32,
-    }
 }

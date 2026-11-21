@@ -528,7 +528,7 @@ pub fn show_dialogs(
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.add(
-                        egui::Image::new(egui::include_image!("../../assets/icon.svg"))
+                        egui::Image::new(egui::include_image!("../img/logo-512.png"))
                             .fit_to_exact_size(Vec2::splat(64.0)),
                     );
                     ui.vertical(|ui| {
