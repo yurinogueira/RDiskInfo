@@ -42,6 +42,7 @@ jobs:
         run: |
           cargo test --locked
           desktop-file-validate dist/rdiskinfo.desktop
+          python3 -c "import xml.etree.ElementTree as ET; ET.parse('dist/io.github.yurinogueira.rdiskinfo.policy')"
 
       - name: Build release binary
         run: cargo build --release --locked
@@ -53,6 +54,7 @@ jobs:
           mkdir -p "${STAGE}"
           cp target/release/rdiskinfo "${STAGE}/"
           cp dist/rdiskinfo.desktop "${STAGE}/"
+          cp dist/io.github.yurinogueira.rdiskinfo.policy "${STAGE}/"
           cp src/img/logo-512.png "${STAGE}/rdiskinfo.png"
           cp assets/icon.svg "${STAGE}/rdiskinfo.svg"
           cp README.md LICENSE "${STAGE}/"
